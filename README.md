@@ -35,7 +35,7 @@ DevFinder is a single-page React app that talks straight to the public GitHub RE
 
 ## Data and rate limits
 
-DevFinder uses `https://api.github.com` without authentication, so every visitor gets 60 requests per hour from their own IP. Responses are cached in memory for five minutes, and the UI surfaces rate-limit errors with a retry path. No personal data is collected or transmitted anywhere else.
+DevFinder uses `https://api.github.com` without authentication, so every visitor gets 60 requests per hour from their own IP. Successful responses are cached in memory for five minutes and mirrored to local storage, so previously opened profiles keep working even after the anonymous limit runs out. When a request does hit the limit, the UI shows the exact reset time and a live countdown instead of a dead end. No personal data is collected or transmitted anywhere else.
 
 ## Stack
 

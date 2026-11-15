@@ -161,6 +161,7 @@ export default function Profile() {
       <ErrorState
         message={error?.message ?? 'That profile could not be loaded.'}
         rateLimited={error?.rateLimited}
+        resetAt={error?.resetAt}
         onRetry={() => setReload((value) => value + 1)}
       />
     )

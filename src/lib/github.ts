@@ -66,18 +66,57 @@ export interface ProfileBundle {
 export class GithubError extends Error {
   status: number
   rateLimited: boolean
+  resetAt?: number
 
-  constructor(message: string, status: number, rateLimited = false) {
+  constructor(message: string, status: number, rateLimited = false, resetAt?: number) {
     super(message)
     this.name = 'GithubError'
     this.status = status
     this.rateLimited = rateLimited
+    this.resetAt = resetAt
   }
 }
 
-const cache = new Map<string, { at: number; data: unknown }>()
+interface CacheRecord {
+  at: number
+  data: unknown
+}
+
+const CACHE_KEY = 'devfinder:cache:v1'
+const CACHE_LIMIT = 80
+const cache = new Map<string, CacheRecord>()
+let cacheReady = false
+let flushTimer: number | undefined
+
+function readCache() {
+  if (cacheReady) return
+  cacheReady = true
+  try {
+    const raw = localStorage.getItem(CACHE_KEY)
+    if (!raw) return
+    const parsed = JSON.parse(raw) as Record<string, CacheRecord>
+    for (const [key, record] of Object.entries(parsed)) {
+      if (record && typeof record.at === 'number') cache.set(key, record)
+    }
+  } catch {
+    return
+  }
+}
+
+function writeCache() {
+  window.clearTimeout(flushTimer)
+  flushTimer = window.setTimeout(() => {
+    try {
+      const newest = [...cache.entries()].sort((a, b) => b[1].at - a[1].at).slice(0, CACHE_LIMIT)
+      localStorage.setItem(CACHE_KEY, JSON.stringify(Object.fromEntries(newest)))
+    } catch {
+      return
+    }
+  }, 300)
+}
 
 async function gh<T>(path: string): Promise<T> {
+  readCache()
   const hit = cache.get(path)
   if (hit && Date.now() - hit.at < TTL) return hit.data as T
 
@@ -90,16 +129,30 @@ async function gh<T>(path: string): Promise<T> {
 
   if (!res.ok) {
     const remaining = res.headers.get('x-ratelimit-remaining')
+    const resetSeconds = Number(res.headers.get('x-ratelimit-reset'))
+    const resetAt = Number.isFinite(resetSeconds) && resetSeconds > 0 ? resetSeconds * 1000 : undefined
     const rateLimited = res.status === 403 || res.status === 429 || remaining === '0'
     if (res.status === 404) throw new GithubError('That username does not exist on GitHub.', 404)
     if (rateLimited) {
-      throw new GithubError('The public GitHub API limit is reached. Wait a minute, then try again.', res.status, true)
+      if (hit) return hit.data as T
+      const when = resetAt
+        ? new Date(resetAt).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' })
+        : null
+      throw new GithubError(
+        when
+          ? `GitHub's anonymous limit of 60 requests an hour is used up. It resets around ${when}.`
+          : "GitHub's anonymous limit is used up for now. Give it a few minutes.",
+        res.status,
+        true,
+        resetAt,
+      )
     }
     throw new GithubError('GitHub could not answer right now. Try again in a moment.', res.status)
   }
 
   const data = (await res.json()) as T
   cache.set(path, { at: Date.now(), data })
+  writeCache()
   return data
 }
 
