@@ -130,6 +130,7 @@ export async function getRateLimit(): Promise<RateLimitInfo> {
 }
 
 export const FEATURED_DEVELOPERS = [
+  { login: 'Faizan-khan144', tagline: 'The developer behind DevFinder.' },
   { login: 'torvalds', tagline: 'The kernel, and nothing else.' },
   { login: 'gaearon', tagline: 'React, in public.' },
   { login: 'sindresorhus', tagline: 'Ten thousand small utilities.' },
