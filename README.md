@@ -92,6 +92,10 @@ npx vercel --prod
 - Shared compare links
 - Light theme with the same motion language
 
+## Author
+
+Built by [Faizan Khan](https://github.com/Faizan-khan144).
+
 ## License
 
 MIT, see [LICENSE](./LICENSE).
