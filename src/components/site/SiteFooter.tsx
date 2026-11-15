@@ -69,9 +69,14 @@ export default function SiteFooter() {
       <div className="mx-auto mt-10 flex max-w-6xl flex-col items-center justify-between gap-3 border-t border-line px-6 pt-6 text-[13px] text-faint sm:flex-row">
         <span>© {new Date().getFullYear()} DevFinder — public data, read carefully.</span>
         <span className="flex items-center gap-4">
-          <span className="flex items-center gap-1.5">
-            <Heart className="h-3.5 w-3.5 text-accent" /> built with React + Vite
-          </span>
+          <a
+            href="https://github.com/Faizan-khan144"
+            target="_blank"
+            rel="noreferrer"
+            className="flex items-center gap-1.5 transition-colors hover:text-accent"
+          >
+            <Heart className="h-3.5 w-3.5 text-accent" /> built by Faizan Khan
+          </a>
           <a
             href="https://docs.github.com/en/rest"
             target="_blank"
